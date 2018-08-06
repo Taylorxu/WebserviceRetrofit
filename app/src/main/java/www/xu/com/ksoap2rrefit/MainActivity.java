@@ -3,23 +3,41 @@ package www.xu.com.ksoap2rrefit;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Xml;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
+
+import org.dom4j.Attribute;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.xml.sax.InputSource;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Iterator;
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import www.xu.com.ksoap2rrefit.Response.Envelope;
 import www.xu.com.ksoap2rrefit.bean.PositionRole;
 
 public class MainActivity extends AppCompatActivity {
     String nameSpace = "http://post.extinterface.web.wisesign.cn/";
+    //TODO  动态添加 参数等 element
     String stringEnvelope = "<v:Envelope     xmlns:v=\"http://schemas.xmlsoap.org/soap/envelope/\">\n" +
             "       <v:Body>\n" +
             "          <n0:queryPostModel xmlns:n0=\"" + nameSpace + "\">\n" +
@@ -43,11 +61,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onResponse(Call<String> call, Response<String> response) {
                         String result = response.body();
                         textView.setText(result);
-
-                        PositionRole role = new PositionRole();
-                        role.setNameSpace(nameSpace);
-                        Envelope.getEnvelope().setBody(new Envelope.ResponseBody<>(role));
-                        main(result);
+                        deXmlToObject(result);
                     }
 
                     @Override
@@ -62,14 +76,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * @param args
+     * @param xmlStr 将返回来的string形式的xml 解析成想要的对象数据形式
      */
-    public static void main(String args) {
 
-        SAXReader reader = new SAXReader();
+    public void deXmlToObject(String xmlStr) {
         try {
-            Document document = reader.read(args);
-            Node node=document.selectSingleNode("");
+            Document document = DocumentHelper.parseText(xmlStr);
+            Element rootElement = document.getRootElement();
+
+
+            String returnResult = new String();
+            for (Iterator<Element> it = rootElement.elementIterator(); it.hasNext(); ) {
+                Element el = it.next();
+                Log.e("treeWalk", el.getName() + "---------" + el.getStringValue());
+                returnResult = el.getStringValue();
+            }
+            Gson gson = new Gson();
+            List<PositionRole.Pos> data = gson.fromJson(returnResult.toString(), new TypeToken<List<PositionRole.Pos>>() {//TODO 返回对象的泛型 PositionRole.Pos
+            }.getType());
+            for (PositionRole.Pos pos : data) {
+                Log.e(pos.getPostId(), pos.getPostName());
+            }
 
         } catch (DocumentException e) {
             e.printStackTrace();

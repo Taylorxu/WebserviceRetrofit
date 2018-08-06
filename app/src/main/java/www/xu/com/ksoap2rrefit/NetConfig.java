@@ -68,7 +68,7 @@ public class NetConfig implements Interceptor, CookieJar {
             if (content.indexOf("<soap:Fault>") > -1) {
                 return response;
             }
-            String rebuildResult = content.substring(content.indexOf(">{") + 1, content.indexOf("</return>"));
+            String rebuildResult = content;//.substring(content.indexOf(">{") + 1, content.indexOf("</return>"));
             rebuildResult = rebuildResult.replace("&quot;", "\"");
             rebuildResult = rebuildResult.replace("\"returnValue\":\"\"", "\"returnValue\":null");
 
